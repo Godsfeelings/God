@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>Hello World!</title>
+  <script src="../Build/Cesium/Cesium.js"></script>
+  <script src="../js/Sandcastle-header.js"></script>
+   <script src="../js/echarts.js"></script>
+   <script type="text/javascript" src="../js/jquery-2.1.4.min.js"></script>
+  <style>
+      @import url(../Build/Cesium/Widgets/widgets.css);
+      @import url(../css/bucket.css);
+      html, body, #cesiumContainer {
+          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      }
+      .fullSize {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+#loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.9;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#loadingOverlay h1 {
+    text-align: center;
+    position: relative;
+    top: 50%;
+    margin-top: -0.5em;
+}
+
+.sandcastle-loading #loadingOverlay {
+    display: block;
+}
+
+.sandcastle-loading #toolbar {
+    display: none;
+}
+
+#toolbar {
+    margin: 5px;
+    padding: 2px 5px;
+    position: absolute;
+}
+
+.infoPanel {
+    background: rgba(42, 42, 42, 0.8);
+    padding: 4px;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+      <div id="toolbar"></div>
+  <script>
+    // var url='http://localhost:10001/CNGISInfo/{z}/{y}/{x}.jpg'
+      var url=" http://mt1.google.cn/vt/lyrs=s,t&hl=zh-CN&x={x}&y={y}&z={z}&s=Gali"
+    // var viewer = new Cesium.Viewer('cesiumContainer');
+    var  viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false, // 是否显示动画控件(左下方那个)
+    baseLayerPicker: false, // 是否显示图层选择控件
+    geocoder: false, // 是否显示地名查找控件
+    homeButton: false,
+    timeline: false, // 是否显示时间线控件
+    sceneModePicker: false, // 是否显示投影方式控件
+    navigationHelpButton: false, // 是否显示帮助信息控件
+    infoBox: false, // 是否显示点击要素之后显示的信息
+    selectionIndicator: false,
+    projectionPicker: false,
+    requestRenderMode: false,
+    fullscreenButton: false,
+    imageryProvider: new Cesium.UrlTemplateImageryProvider({
+      url: url
+    }),
+    contextOptions: {
+      webgl: {
+        preserveDrawingBuffer: true
+      }
+    }
+  });
+     //设置初始位置
+ viewer.camera.flyTo({
+        destination :  Cesium.Cartesian3.fromDegrees(121.48 , 31.22 , 5001245.0), // 设置位置
+        orientation: {
+            heading : Cesium.Math.toRadians(20.0), // 方向
+            pitch : Cesium.Math.toRadians(-90.0),// 倾斜角度
+            roll : 0
+        },
+        duration:5, // 设置飞行持续时间，默认会根据距离来计算
+        complete: function () {
+            // 到达位置后执行的回调函数
+            console.log('到达目的地');
+        },
+        cancle: function () {
+            // 如果取消飞行则会调用此函数
+            console.log('取消定位')
+        },
+        pitchAdjustHeight: -90, // 如果摄像机飞越高于该值，则调整俯仰俯仰的俯仰角度，并将地球保持在视口中。
+        maximumHeight:5000, // 相机最大飞行高度
+        flyOverLongitude: 100, // 如果到达目的地有2种方式，设置具体值后会强制选择方向飞过这个经度
+    });
+ // 数据
+        let data = [];
+        data[0] = [{longitude:116.492339, dimension:39.980411, height:0, time:0},{longitude:101.909418, dimension:39.649198, height:0, time:40},{longitude:114.272402, dimension:25.575537, height:70000, time:100},{longitude:85.572619, dimension:40.046271, height:70000, time:280}, {longitude:128.695882, dimension:47.197037, height:0, time:360}];
+    // 起始时间
+        let start = Cesium.JulianDate.fromDate(new Date(2015,6,27));
+         // 结束时间
+        let stop = Cesium.JulianDate.addSeconds(start, 360,new Cesium.JulianDate());
+        //console.log(new Cesium.JulianDate());
+         // 设置始时钟始时间
+        viewer.clock.startTime = start.clone();
+         // 设置时钟当前时间
+        viewer.clock.currentTime = start.clone();
+         // 设置始终停止时间
+        viewer.clock.stopTime  = stop.clone();
+        // 时间速率，数字越大时间过的越快
+        viewer.clock.multiplier = 10;
+        console.log("开始时间:"+start+"-----结束时间:"+stop);
+       //给时间线设置边界
+        //viewer.timeline.zoomTo(start, stop);
+         // 循环执行
+        viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+         for(let j=0; j<data.length; j++){
+            let property = computeFlight(data[j]);
+            // 添加模型
+            let entity = viewer.entities.add({
+                // 和时间轴关联
+                availability : new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                    start : start,
+                    stop : stop
+                })]),
+                position: property,
+                //基于位置移动自动计算方向.
+                orientation: new Cesium.VelocityOrientationProperty(property),
+                // 模型数据
+                model: {
+                    uri: 'data/dmzc.glb',
+                    minimumPixelSize:128
+                },
+                //路径
+                path : {
+                    resolution : 1,
+                    material : new Cesium.PolylineGlowMaterialProperty({
+                        glowPower : 0.1,
+                        color : Cesium.Color.PINK
+                    }),
+                    width : 10
+                }
+            });
+        }
+          /**
+         * 计算飞行
+         * @param source 数据坐标
+         * @returns {SampledPositionProperty|*}
+         */
+        function computeFlight(source) {
+            // 取样位置 相当于一个集合
+            let property = new Cesium.SampledPositionProperty();
+            for(let i=0; i<source.length; i++){
+                let time = Cesium.JulianDate.addSeconds(start, source[i].time, new Cesium.JulianDate);
+                let position = Cesium.Cartesian3.fromDegrees(source[i].longitude, source[i].dimension, source[i].height);
+                // 添加位置，和时间对应
+                property.addSample(time, position);
+            }
+            return property;
+        }
+        //头顶视角
+Sandcastle.addDefaultToolbarButton('View Top Down', function () {
+    viewer.trackedEntity = undefined;
+    viewer.zoomTo(viewer.entities, new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90)));
+});
+//侧面视角
+Sandcastle.addToolbarButton('View Side', function () {
+    viewer.trackedEntity = undefined;
+    viewer.zoomTo(viewer.entities, new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-90), Cesium.Math.toRadians(-15), 7500));
+});
+//追随视角
+Sandcastle.addToolbarButton('View Aircraft', function () {
+    viewer.trackedEntity = entity;
+});
+  </script>
+</body>
+</html>
