@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>Hello World!</title>
+  <script src="../Build/Cesium/Cesium.js"></script>
+  <script src="../js/Sandcastle-header.js"></script>
+   <script src="../js/echarts.js"></script>
+  <style>
+      @import url(../Build/Cesium/Widgets/widgets.css);
+      @import url(../css/bucket.css);
+      html, body, #cesiumContainer {
+          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+      <div id="toolbar"></div>
+  <script>
+    // var url='http://localhost:10001/CNGISInfo/{z}/{y}/{x}.jpg'
+      var url=" http://mt1.google.cn/vt/lyrs=s,t&hl=zh-CN&x={x}&y={y}&z={z}&s=Gali"
+    // var viewer = new Cesium.Viewer('cesiumContainer');
+    var  viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false, // 是否显示动画控件(左下方那个)
+    baseLayerPicker: false, // 是否显示图层选择控件
+    geocoder: false, // 是否显示地名查找控件
+    homeButton: false,
+    timeline: false, // 是否显示时间线控件
+    sceneModePicker: false, // 是否显示投影方式控件
+    navigationHelpButton: false, // 是否显示帮助信息控件
+    infoBox: false, // 是否显示点击要素之后显示的信息
+    selectionIndicator: false,
+    projectionPicker: false,
+    requestRenderMode: false,
+    fullscreenButton: false,
+    imageryProvider: new Cesium.UrlTemplateImageryProvider({
+      url: url
+    }),
+    terrainProvider: new Cesium.CesiumTerrainProvider({
+      url: "http://localhost:10001/HDEM/"
+    }),
+    contextOptions: {
+      webgl: {
+        preserveDrawingBuffer: true
+      }
+    }
+  });
+viewer.scene.globe.material = getElevationMaterial();
+  function getElevationMaterial() {
+
+            var material;
+            var minHeight = -414.0;
+            var maxHeight = 8777.0;
+            material = Cesium.Material.fromType('ElevationRamp');
+            shadingUniforms = material.uniforms;
+            shadingUniforms.minHeight = minHeight;
+            shadingUniforms.maxHeight = maxHeight;
+            shadingUniforms.image = getColorRamp();
+
+            return material;
+
+  }
+
+ 
+  function getColorRamp() {
+           var elevationRamp = [0.0, 0.045, 0.1, 0.15, 0.37, 0.54, 1.0];
+            var ramp = document.createElement('canvas');
+            ramp.width = 100;
+            ramp.height = 1;
+            var ctx = ramp.getContext('2d');
+            var grd = ctx.createLinearGradient(0, 0, 100, 0);
+            grd.addColorStop(elevationRamp[0], '#000000'); //black
+            grd.addColorStop(elevationRamp[1], '#2747E0'); //blue
+            grd.addColorStop(elevationRamp[2], '#D33B7D'); //pink
+            grd.addColorStop(elevationRamp[3], '#D33038'); //red
+            grd.addColorStop(elevationRamp[4], '#FF9742'); //orange
+            grd.addColorStop(elevationRamp[5], '#ffd700'); //yellow
+            grd.addColorStop(elevationRamp[6], '#ffffff'); //white
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, 100, 1);
+            return ramp;
+    }
+  </script>
+</body>
+</html>
